@@ -4,8 +4,9 @@ const setBtn = document.getElementById('setBtn');
 const clearBtn = document.getElementById('clearBtn');
 const statusEl = document.getElementById('status');
 
-let alarmTime = null; // "HH:MM:SS"
+let alarmTime = null; // "HH:MM"
 let ringing = false;
+let hasRung = false; // 同じ分に二重で鳴らないためのフラグ
 let audioCtx = null;
 let beepTimer = null;
 
@@ -13,22 +14,44 @@ function pad(n) {
   return String(n).padStart(2, '0');
 }
 
-function nowString() {
+function currentHM() {
+  const d = new Date();
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function currentHMS() {
   const d = new Date();
   return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
-function tick() {
-  const now = nowString();
-  clockEl.textContent = now;
+// AudioContext はユーザー操作の中で用意しておく（そうしないと後で音が鳴らない）
+function ensureAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
 
-  if (alarmTime && !ringing && now === alarmTime) {
-    startRinging();
+function tick() {
+  clockEl.textContent = currentHMS();
+
+  const nowHM = currentHM();
+  if (alarmTime && !ringing) {
+    if (nowHM === alarmTime && !hasRung) {
+      startRinging();
+    }
+    // 分が変わったらフラグをリセット（次の日など同時刻に再度鳴らせるように）
+    if (nowHM !== alarmTime) {
+      hasRung = false;
+    }
   }
 }
 
 function startRinging() {
   ringing = true;
+  hasRung = true;
   document.body.classList.add('ringing');
   statusEl.textContent = '⏰ 時間やで！「解除」を押してな';
   playBeep();
@@ -45,22 +68,23 @@ function stopRinging() {
 
 // Web Audio API でシンプルなビープ音を生成（外部音源ファイル不要）
 function playBeep() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
+  ensureAudio();
   const beepOnce = () => {
+    if (!audioCtx) return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'sine';
     osc.frequency.value = 880;
-    gain.gain.value = 0.2;
+    gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.25, audioCtx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     osc.start();
-    osc.stop(audioCtx.currentTime + 0.2);
+    osc.stop(audioCtx.currentTime + 0.25);
   };
   beepOnce();
-  beepTimer = setInterval(beepOnce, 600);
+  beepTimer = setInterval(beepOnce, 700);
 }
 
 setBtn.addEventListener('click', () => {
@@ -68,10 +92,13 @@ setBtn.addEventListener('click', () => {
     statusEl.textContent = '時刻を入力してな';
     return;
   }
-  // time入力は step=1 でも秒が空の場合があるので補完
-  const parts = alarmInput.value.split(':');
-  while (parts.length < 3) parts.push('00');
-  alarmTime = parts.map((p) => pad(Number(p))).join(':');
+  // クリック（ユーザー操作）のうちに音声を準備しておく
+  ensureAudio();
+
+  // "HH:MM" または "HH:MM:SS" のどちらでも分単位で扱う
+  const [h, m] = alarmInput.value.split(':');
+  alarmTime = `${pad(Number(h))}:${pad(Number(m))}`;
+  hasRung = currentHM() === alarmTime; // 今まさに同じ分なら誤発火させない
 
   setBtn.disabled = true;
   clearBtn.disabled = false;
@@ -81,6 +108,7 @@ setBtn.addEventListener('click', () => {
 
 clearBtn.addEventListener('click', () => {
   alarmTime = null;
+  hasRung = false;
   stopRinging();
   setBtn.disabled = false;
   clearBtn.disabled = true;
