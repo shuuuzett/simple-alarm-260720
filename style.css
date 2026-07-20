@@ -1,0 +1,100 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  background: #0f172a;
+  color: #f1f5f9;
+}
+
+.app {
+  width: 100%;
+  max-width: 360px;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
+  margin-bottom: 24px;
+}
+
+.clock {
+  font-size: 48px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+  margin-bottom: 32px;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.time-input {
+  font-size: 20px;
+  padding: 12px;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: #1e293b;
+  color: #f1f5f9;
+  text-align: center;
+}
+
+.btn {
+  font-size: 16px;
+  font-weight: 600;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-set {
+  background: #22c55e;
+  color: #052e16;
+}
+
+.btn-clear {
+  background: #ef4444;
+  color: #450a0a;
+}
+
+.btn:not(:disabled):hover {
+  opacity: 0.85;
+}
+
+.status {
+  font-size: 14px;
+  color: #94a3b8;
+  min-height: 1.4em;
+}
+
+body.ringing {
+  animation: flash 0.6s steps(1) infinite;
+}
+
+@keyframes flash {
+  50% {
+    background: #7f1d1d;
+  }
+}

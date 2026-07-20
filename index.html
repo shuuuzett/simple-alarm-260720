@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>シンプルアラーム</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <h1 class="title">アラーム</h1>
+
+    <div class="clock" id="clock">--:--:--</div>
+
+    <div class="controls">
+      <input type="time" id="alarmTime" class="time-input" step="1" />
+      <button id="setBtn" class="btn btn-set">セット</button>
+      <button id="clearBtn" class="btn btn-clear" disabled>解除</button>
+    </div>
+
+    <p class="status" id="status">アラーム時刻を設定してな</p>
+  </main>
+
+  <audio id="alarmSound" loop>
+    <!-- シンプルなビープ音をJSで生成するため src は無し -->
+  </audio>
+
+  <script src="app.js"></script>
+</body>
+</html>
